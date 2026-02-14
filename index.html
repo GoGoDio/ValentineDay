@@ -19,10 +19,11 @@ body {
     transform:translate(-50%,-50%);
     color:white;
     text-align:center;
-    font-size:32px;
-    max-width:80%;
+    font-size:28px;
+    max-width:90%;
+    line-height:1.6;
     opacity:0;
-    transition:opacity 3s ease;
+    transition:opacity 2.5s ease;
 }
 
 canvas { display:block; }
@@ -31,11 +32,14 @@ canvas { display:block; }
 <body>
 
 <div id="message">
-Даша, сьогодні я хочу подарувати тобі всесвіт.<br>
-Ти найкраща і я тебе люблю ❤️
+    <div>Даша, сьогодні я хочу</div>
+    <div style="font-size:34px; color:#ff66cc;">подарувати тобі всесвіт.</div>
+    <div>Ти найкраща і я тебе люблю ❤️</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/FontLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/geometries/TextGeometry.js"></script>
 
 <script>
 let scene = new THREE.Scene();
@@ -49,7 +53,7 @@ document.body.appendChild(renderer.domElement);
 
 // ⭐ Stars
 let starGeo = new THREE.BufferGeometry();
-let starCount = 4000;
+let starCount = 3000;
 let starPos = new Float32Array(starCount*3);
 
 for(let i=0;i<starCount;i++){
@@ -58,22 +62,18 @@ for(let i=0;i<starCount;i++){
     starPos[i*3+2]=(Math.random()-0.5)*1500;
 }
 starGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
-
 let starMat = new THREE.PointsMaterial({ color:0xffffff, size:1 });
 let stars = new THREE.Points(starGeo, starMat);
 scene.add(stars);
 
-// ❤️ Серце з написів
+// ❤️ Серце
 let group = new THREE.Group();
 scene.add(group);
 
 let loader = new THREE.FontLoader();
 loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function(font){
 
-    let text = "I LOVE YOU";
-    let index = 0;
-
-    for(let t=0; t<Math.PI*2; t+=0.12){
+    for(let t=0; t<Math.PI*2; t+=0.15){
 
         let x = 16*Math.pow(Math.sin(t),3);
         let y = 13*Math.cos(t)
@@ -81,9 +81,9 @@ loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json
               -2*Math.cos(3*t)
               -Math.cos(4*t);
 
-        let geo = new THREE.TextGeometry(text, {
+        let geo = new THREE.TextGeometry("I LOVE YOU", {
             font: font,
-            size: 2.2,
+            size: 2,
             height: 0.4
         });
 
@@ -101,6 +101,25 @@ loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json
     group.visible = false;
 });
 
+let fireworks = [];
+
+function createFirework(){
+    let particles = [];
+    for(let i=0;i<80;i++){
+        particles.push({
+            x:0,y:0,z:0,
+            vx:(Math.random()-0.5)*3,
+            vy:(Math.random()-0.5)*3,
+            vz:(Math.random()-0.5)*3,
+            life:60
+        });
+    }
+    fireworks.push(particles);
+}
+
+renderer.domElement.addEventListener("click", createFirework);
+renderer.domElement.addEventListener("touchstart", createFirework);
+
 let clock = new THREE.Clock();
 let messageDiv = document.getElementById("message");
 
@@ -108,25 +127,12 @@ function animate(){
     requestAnimationFrame(animate);
 
     let t = clock.getElapsedTime();
-
     stars.rotation.y += 0.0005;
 
-    // 0–2 сек — fade in текст
-    if(t < 2){
-        messageDiv.style.opacity = t/2;
-    }
+    if(t < 2) messageDiv.style.opacity = t/2;
+    if(t >= 2 && t < 12) messageDiv.style.opacity = 1;
+    if(t >= 12 && t < 15) messageDiv.style.opacity = 1 - (t-12)/3;
 
-    // 2–12 сек — текст читається
-    if(t >= 2 && t < 12){
-        messageDiv.style.opacity = 1;
-    }
-
-    // 12–15 сек — fade out текст
-    if(t >= 12 && t < 15){
-        messageDiv.style.opacity = 1 - (t-12)/3;
-    }
-
-    // після 15 сек — показати серце
     if(t >= 15){
         messageDiv.style.display = "none";
         group.visible = true;
@@ -136,6 +142,24 @@ function animate(){
         let scale = 1 + Math.sin(t*3)*0.05;
         group.scale.set(scale,scale,scale);
     }
+
+    // 🎆 Fireworks
+    fireworks.forEach(firework=>{
+        firework.forEach(p=>{
+            p.x += p.vx;
+            p.y += p.vy;
+            p.z += p.vz;
+            p.life--;
+
+            let geo = new THREE.SphereGeometry(0.5,6,6);
+            let mat = new THREE.MeshBasicMaterial({color:0xffccff});
+            let sphere = new THREE.Mesh(geo,mat);
+            sphere.position.set(p.x,p.y,p.z);
+            scene.add(sphere);
+
+            setTimeout(()=>scene.remove(sphere),500);
+        });
+    });
 
     renderer.render(scene,camera);
 }

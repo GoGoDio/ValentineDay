@@ -5,204 +5,147 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>For Dasha ❤️</title>
 <style>
-body { margin:0; overflow:hidden; background:black; }
+body {
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family: Arial, sans-serif;
+}
+
+#message {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    text-align:center;
+    font-size:32px;
+    max-width:80%;
+    opacity:0;
+    transition:opacity 3s ease;
+}
+
 canvas { display:block; }
 </style>
 </head>
 <body>
 
+<div id="message">
+Даша, сьогодні я хочу подарувати тобі всесвіт.<br>
+Ти найкраща і я тебе люблю ❤️
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
 <script>
-
 let scene = new THREE.Scene();
-let camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 3000);
-camera.position.z = 320;
+let camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
+camera.position.z = 200;
 
 let renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
 
-// 🌌 Bloom
-let composer = new THREE.EffectComposer(renderer);
-composer.addPass(new THREE.RenderPass(scene,camera));
-let bloom = new THREE.UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth,window.innerHeight),
-    1.2,0.4,0.85
-);
-composer.addPass(bloom);
-
-// 🌌 Nebula shader
-let nebulaGeo = new THREE.PlaneGeometry(4000,4000);
-let nebulaMat = new THREE.ShaderMaterial({
-    uniforms:{ time:{value:0} },
-    vertexShader:`
-        varying vec2 vUv;
-        void main(){
-            vUv=uv;
-            gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
-        }
-    `,
-    fragmentShader:`
-        varying vec2 vUv;
-        uniform float time;
-        float noise(vec2 p){
-            return sin(p.x)*sin(p.y);
-        }
-        void main(){
-            vec2 uv=vUv*5.0;
-            float n=noise(uv+time*0.1);
-            vec3 col=vec3(0.3+0.5*n,0.0+0.3*n,0.4+0.6*n);
-            gl_FragColor=vec4(col,1.0);
-        }
-    `,
-    depthWrite:false
-});
-let nebula = new THREE.Mesh(nebulaGeo,nebulaMat);
-nebula.position.z=-1000;
-scene.add(nebula);
-
 // ⭐ Stars
 let starGeo = new THREE.BufferGeometry();
-let starCount = 6000;
+let starCount = 4000;
 let starPos = new Float32Array(starCount*3);
 
 for(let i=0;i<starCount;i++){
-    starPos[i*3]=(Math.random()-0.5)*2000;
-    starPos[i*3+1]=(Math.random()-0.5)*2000;
-    starPos[i*3+2]=(Math.random()-0.5)*2000;
+    starPos[i*3]=(Math.random()-0.5)*1500;
+    starPos[i*3+1]=(Math.random()-0.5)*1500;
+    starPos[i*3+2]=(Math.random()-0.5)*1500;
 }
 starGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
 
-let starMat = new THREE.PointsMaterial({color:0xffffff,size:1});
-let stars = new THREE.Points(starGeo,starMat);
+let starMat = new THREE.PointsMaterial({ color:0xffffff, size:1 });
+let stars = new THREE.Points(starGeo, starMat);
 scene.add(stars);
 
-// ✨ Particles
-let particleCount = 7000;
-let geometry = new THREE.BufferGeometry();
-let positions = new Float32Array(particleCount*3);
+// ❤️ Серце з написів
+let group = new THREE.Group();
+scene.add(group);
 
-for(let i=0;i<particleCount;i++){
-    positions[i*3]=(Math.random()-0.5)*300;
-    positions[i*3+1]=(Math.random()-0.5)*300;
-    positions[i*3+2]=(Math.random()-0.5)*300;
-}
-geometry.setAttribute('position', new THREE.BufferAttribute(positions,3));
+let loader = new THREE.FontLoader();
+loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function(font){
 
-let material = new THREE.PointsMaterial({
-    color:0xff66cc,
-    size:1.6
-});
-let particles = new THREE.Points(geometry,material);
-scene.add(particles);
+    let text = "I LOVE YOU";
+    let index = 0;
 
-// ❤️ Heart (з текстом I LOVE YOU)
-let heartTargets = [];
-let textString="I LOVE YOU";
+    for(let t=0; t<Math.PI*2; t+=0.12){
 
-for(let i=0;i<particleCount;i++){
-    let t=Math.random()*Math.PI*2;
+        let x = 16*Math.pow(Math.sin(t),3);
+        let y = 13*Math.cos(t)
+              -5*Math.cos(2*t)
+              -2*Math.cos(3*t)
+              -Math.cos(4*t);
 
-    let x=16*Math.pow(Math.sin(t),3);
-    let y=13*Math.cos(t)
-          -5*Math.cos(2*t)
-          -2*Math.cos(3*t)
-          -Math.cos(4*t);
+        let geo = new THREE.TextGeometry(text, {
+            font: font,
+            size: 2.2,
+            height: 0.4
+        });
 
-    heartTargets.push({
-        x:x*4,
-        y:y*4,
-        z:(Math.random()-0.5)*60
-    });
-}
+        geo.center();
 
-// 💌 Text targets
-let textTargets=[];
-let canvas2=document.createElement("canvas");
-let ctx2=canvas2.getContext("2d");
-canvas2.width=1800;
-canvas2.height=1000;
+        let mat = new THREE.MeshBasicMaterial({ color:0xff66cc });
+        let mesh = new THREE.Mesh(geo, mat);
 
-ctx2.fillStyle="white";
-ctx2.font="bold 100px Arial";
-ctx2.textAlign="center";
+        mesh.position.set(x*4, y*4, Math.sin(t)*20);
+        mesh.lookAt(0,0,0);
 
-let lines=[
-"Даша, сьогодні я хочу подарувати тобі всесвіт",
-"ти найкраща і я тебе люблю"
-];
-
-lines.forEach((line,i)=>{
-    ctx2.fillText(line,900,400+i*170);
-});
-
-let data=ctx2.getImageData(0,0,1800,1000);
-
-for(let y=0;y<1000;y+=6){
-    for(let x=0;x<1800;x+=6){
-        let index=(x+y*1800)*4;
-        if(data.data[index+3]>128){
-            textTargets.push({
-                x:(x-900)/4,
-                y:(500-y)/4,
-                z:0
-            });
-        }
+        group.add(mesh);
     }
-}
 
-// ⏱ Таймінг
-let clock=new THREE.Clock();
+    group.visible = false;
+});
+
+let clock = new THREE.Clock();
+let messageDiv = document.getElementById("message");
 
 function animate(){
     requestAnimationFrame(animate);
 
-    let t=clock.getElapsedTime();
-    nebulaMat.uniforms.time.value=t;
-    stars.rotation.y+=0.0005;
+    let t = clock.getElapsedTime();
 
-    let pos=particles.geometry.attributes.position.array;
-    let targetSet;
+    stars.rotation.y += 0.0005;
 
-    if(t<6){
-        targetSet=textTargets;
-    }
-    else if(t<16){
-        targetSet=textTargets;
-    }
-    else{
-        targetSet=heartTargets;
-        particles.rotation.y+=0.004;
-        particles.rotation.x=Math.sin(t)*0.2;
-
-        let pulse=1+Math.sin(t*3)*0.05;
-        particles.scale.set(pulse,pulse,pulse);
+    // 0–2 сек — fade in текст
+    if(t < 2){
+        messageDiv.style.opacity = t/2;
     }
 
-    for(let i=0;i<particleCount;i++){
-        let target=targetSet[i%targetSet.length];
-        pos[i*3]+=(target.x-pos[i*3])*0.02;
-        pos[i*3+1]+=(target.y-pos[i*3+1])*0.02;
-        pos[i*3+2]+=(target.z-pos[i*3+2])*0.02;
+    // 2–12 сек — текст читається
+    if(t >= 2 && t < 12){
+        messageDiv.style.opacity = 1;
     }
 
-    particles.geometry.attributes.position.needsUpdate=true;
+    // 12–15 сек — fade out текст
+    if(t >= 12 && t < 15){
+        messageDiv.style.opacity = 1 - (t-12)/3;
+    }
 
-    composer.render();
+    // після 15 сек — показати серце
+    if(t >= 15){
+        messageDiv.style.display = "none";
+        group.visible = true;
+        group.rotation.y += 0.01;
+        group.rotation.x = Math.sin(t)*0.15;
+
+        let scale = 1 + Math.sin(t*3)*0.05;
+        group.scale.set(scale,scale,scale);
+    }
+
+    renderer.render(scene,camera);
 }
 
 animate();
 
 window.addEventListener("resize",()=>{
-    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth,window.innerHeight);
-    composer.setSize(window.innerWidth,window.innerHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight);
 });
 </script>
 

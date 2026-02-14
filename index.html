@@ -16,7 +16,7 @@ canvas { display:block; }
 <script>
 let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
-camera.position.z = 250;
+camera.position.z = 280;
 
 let renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -35,15 +35,12 @@ for(let i=0;i<starCount;i++){
 }
 starGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
 
-let starMat = new THREE.PointsMaterial({
-    color:0xffffff,
-    size:1
-});
+let starMat = new THREE.PointsMaterial({ color:0xffffff, size:1 });
 let stars = new THREE.Points(starGeo, starMat);
 scene.add(stars);
 
 // ✨ Particles
-let particleCount = 5000;
+let particleCount = 6000;
 let geometry = new THREE.BufferGeometry();
 let positions = new Float32Array(particleCount*3);
 
@@ -52,22 +49,19 @@ for(let i=0;i<particleCount;i++){
     positions[i*3+1]=(Math.random()-0.5)*200;
     positions[i*3+2]=(Math.random()-0.5)*200;
 }
-
 geometry.setAttribute('position', new THREE.BufferAttribute(positions,3));
 
 let material = new THREE.PointsMaterial({
     color:0xff66cc,
-    size:1.2
+    size:1.4
 });
-
 let particles = new THREE.Points(geometry, material);
 scene.add(particles);
 
-// ❤️ Heart target positions
+// ❤️ Heart targets
 let heartTargets = [];
 for(let i=0;i<particleCount;i++){
     let t = Math.random()*Math.PI*2;
-    let r = Math.random()*20;
 
     let x = 16*Math.pow(Math.sin(t),3);
     let y = 13*Math.cos(t)
@@ -76,39 +70,41 @@ for(let i=0;i<particleCount;i++){
           -Math.cos(4*t);
 
     heartTargets.push({
-        x:x*3 + (Math.random()-0.5)*5,
-        y:y*3 + (Math.random()-0.5)*5,
+        x:x*3,
+        y:y*3,
         z:(Math.random()-0.5)*40
     });
 }
 
-// 💌 Text target positions
+// 💌 Text targets (bigger canvas)
 let textTargets = [];
 let canvas2 = document.createElement("canvas");
 let ctx2 = canvas2.getContext("2d");
-canvas2.width = 1024;
-canvas2.height = 512;
+canvas2.width = 1400;
+canvas2.height = 800;
 
 ctx2.fillStyle="white";
-ctx2.font="bold 80px Arial";
+ctx2.font="bold 90px Arial";
 ctx2.textAlign="center";
 
-let message = "Даша, сьогодні я хочу подарувати тобі всесвіт\nти найкраща і я тебе люблю";
+let lines = [
+"Даша, сьогодні я хочу подарувати тобі всесвіт",
+"ти найкраща і я тебе люблю"
+];
 
-let lines = message.split("\n");
 lines.forEach((line,i)=>{
-    ctx2.fillText(line,512,200 + i*100);
+    ctx2.fillText(line,700,300 + i*150);
 });
 
-let data = ctx2.getImageData(0,0,1024,512);
+let data = ctx2.getImageData(0,0,1400,800);
 
-for(let y=0;y<512;y+=4){
-    for(let x=0;x<1024;x+=4){
-        let index = (x+y*1024)*4;
+for(let y=0;y<800;y+=5){
+    for(let x=0;x<1400;x+=5){
+        let index = (x+y*1400)*4;
         if(data.data[index+3]>128){
             textTargets.push({
-                x:(x-512)/4,
-                y:(256-y)/4,
+                x:(x-700)/4,
+                y:(400-y)/4,
                 z:0
             });
         }
@@ -125,25 +121,25 @@ function animate(){
     for(let i=0;i<particleCount;i++){
         let target;
 
-        if(phase < 300){
+        if(phase < 500){
             target = textTargets[i % textTargets.length];
         } else {
             target = heartTargets[i % heartTargets.length];
         }
 
-        pos[i*3] += (target.x - pos[i*3])*0.02;
-        pos[i*3+1] += (target.y - pos[i*3+1])*0.02;
-        pos[i*3+2] += (target.z - pos[i*3+2])*0.02;
+        pos[i*3] += (target.x - pos[i*3])*0.01;
+        pos[i*3+1] += (target.y - pos[i*3+1])*0.01;
+        pos[i*3+2] += (target.z - pos[i*3+2])*0.01;
     }
 
     particles.geometry.attributes.position.needsUpdate = true;
 
-    if(phase > 300){
-        particles.rotation.y += 0.01;
-        particles.rotation.x = Math.sin(phase*0.01)*0.2;
+    if(phase > 500){
+        particles.rotation.y += 0.003;
+        particles.rotation.x = Math.sin(phase*0.01)*0.15;
     }
 
-    stars.rotation.y += 0.0005;
+    stars.rotation.y += 0.0004;
 
     phase++;
 
@@ -151,13 +147,8 @@ function animate(){
 }
 
 animate();
-
-window.addEventListener("resize",()=>{
-    camera.aspect = window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
 </script>
 
 </body>
 </html>
+

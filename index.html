@@ -5,165 +5,166 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>For Dasha ❤️</title>
 <style>
-body{margin:0;overflow:hidden;background:black;font-family:Arial,sans-serif;}
-#message{
- position:absolute;top:50%;left:50%;
- transform:translate(-50%,-50%);
- color:white;text-align:center;
- font-size:28px;max-width:90%;
- line-height:1.6;opacity:0;
- transition:opacity 2s ease;
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial, sans-serif;
 }
-canvas{display:block;}
+
+#message{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    text-align:center;
+    font-size:26px;
+    max-width:90%;
+    line-height:1.6;
+    opacity:0;
+    transition:opacity 2s ease;
+}
+
+canvas{
+    display:block;
+}
 </style>
 </head>
 <body>
 
 <div id="message">
- <div>Даша, сьогодні я хочу</div>
- <div style="font-size:34px;color:#ff66cc;">подарувати тобі всесвіт.</div>
- <div>Ти найкраща і я тебе люблю ❤️</div>
+    <div>Даша, сьогодні я хочу</div>
+    <div style="font-size:32px;color:#ff66cc;">подарувати тобі всесвіт.</div>
+    <div>Ти найкраща і я тебе люблю ❤️</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<canvas id="c"></canvas>
 
 <script>
-let scene=new THREE.Scene();
-let camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,2000);
-camera.position.z=220;
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
 
-let renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-document.body.appendChild(renderer.domElement);
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-// ⭐ Stars
-let starGeo=new THREE.BufferGeometry();
-let starCount=2000;
-let starPos=new Float32Array(starCount*3);
-for(let i=0;i<starCount;i++){
- starPos[i*3]=(Math.random()-0.5)*1500;
- starPos[i*3+1]=(Math.random()-0.5)*1500;
- starPos[i*3+2]=(Math.random()-0.5)*1500;
-}
-starGeo.setAttribute('position',new THREE.BufferAttribute(starPos,3));
-let starMat=new THREE.PointsMaterial({color:0xffffff,size:1});
-let stars=new THREE.Points(starGeo,starMat);
-scene.add(stars);
+let stars = [];
+let fireworks = [];
+let heartAngle = 0;
+let showHeart = false;
 
-// ❤️ Heart made from I LOVE YOU sprites
-let heartGroup=new THREE.Group();
-scene.add(heartGroup);
-
-function createTextSprite(text){
- let canvas=document.createElement("canvas");
- let ctx=canvas.getContext("2d");
- canvas.width=256;
- canvas.height=64;
- ctx.fillStyle="#ff66cc";
- ctx.font="28px Arial";
- ctx.textAlign="center";
- ctx.fillText(text,128,40);
- let texture=new THREE.CanvasTexture(canvas);
- let material=new THREE.SpriteMaterial({map:texture,transparent:true});
- return new THREE.Sprite(material);
+for(let i=0;i<400;i++){
+    stars.push({
+        x:Math.random()*canvas.width,
+        y:Math.random()*canvas.height,
+        size:Math.random()*2
+    });
 }
 
-for(let t=0;t<Math.PI*2;t+=0.15){
- let x=16*Math.pow(Math.sin(t),3);
- let y=13*Math.cos(t)
-       -5*Math.cos(2*t)
-       -2*Math.cos(3*t)
-       -Math.cos(4*t);
+function drawStars(){
+    ctx.fillStyle="black";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
 
- let sprite=createTextSprite("I LOVE YOU");
- sprite.position.set(x*4,y*4,Math.sin(t)*25);
- sprite.scale.set(25,6,1);
- heartGroup.add(sprite);
+    ctx.fillStyle="white";
+    stars.forEach(s=>{
+        ctx.fillRect(s.x,s.y,s.size,s.size);
+    });
 }
 
-heartGroup.visible=false;
+function drawHeart(){
+    ctx.save();
+    ctx.translate(canvas.width/2,canvas.height/2);
+    ctx.rotate(heartAngle);
 
-// 🎆 Fireworks (lightweight)
-let fireworks=[];
+    ctx.fillStyle="#ff66cc";
+    ctx.font="20px Arial";
+    ctx.textAlign="center";
 
-function launchFirework(){
- let geo=new THREE.BufferGeometry();
- let count=100;
- let positions=new Float32Array(count*3);
- let velocities=[];
+    for(let t=0;t<Math.PI*2;t+=0.2){
+        let x=16*Math.pow(Math.sin(t),3);
+        let y=13*Math.cos(t)
+              -5*Math.cos(2*t)
+              -2*Math.cos(3*t)
+              -Math.cos(4*t);
 
- for(let i=0;i<count;i++){
-  positions[i*3]=0;
-  positions[i*3+1]=0;
-  positions[i*3+2]=0;
-  velocities.push({
-   x:(Math.random()-0.5)*4,
-   y:(Math.random()-0.5)*4,
-   z:(Math.random()-0.5)*4
-  });
- }
+        ctx.fillText("I LOVE YOU",x*10,y*10);
+    }
 
- geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
- let mat=new THREE.PointsMaterial({color:0xffccff,size:3});
- let points=new THREE.Points(geo,mat);
- heartGroup.add(points);
+    ctx.restore();
 
- fireworks.push({mesh:points,velocities:velocities,life:60});
+    heartAngle += 0.01;
 }
 
-renderer.domElement.addEventListener("click",launchFirework);
-renderer.domElement.addEventListener("touchstart",launchFirework);
+function createFirework(){
+    let particles=[];
+    for(let i=0;i<50;i++){
+        particles.push({
+            x:canvas.width/2,
+            y:canvas.height/2,
+            vx:(Math.random()-0.5)*5,
+            vy:(Math.random()-0.5)*5,
+            life:60
+        });
+    }
+    fireworks.push(particles);
+}
 
-// ⏱ Timing
-let clock=new THREE.Clock();
-let messageDiv=document.getElementById("message");
+canvas.addEventListener("click",createFirework);
+canvas.addEventListener("touchstart",createFirework);
+
+function updateFireworks(){
+    fireworks.forEach((fw,index)=>{
+        fw.forEach(p=>{
+            p.x+=p.vx;
+            p.y+=p.vy;
+            p.life--;
+
+            ctx.fillStyle="pink";
+            ctx.fillRect(p.x,p.y,3,3);
+        });
+
+        if(fw[0].life<=0){
+            fireworks.splice(index,1);
+        }
+    });
+}
+
+let startTime = Date.now();
+let message = document.getElementById("message");
 
 function animate(){
- requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
 
- let t=clock.getElapsedTime();
- stars.rotation.y+=0.0005;
+    let elapsed = (Date.now()-startTime)/1000;
 
- // Message timing
- if(t<2) messageDiv.style.opacity=t/2;
- else if(t<12) messageDiv.style.opacity=1;
- else if(t<15) messageDiv.style.opacity=1-(t-12)/3;
- else{
-  messageDiv.style.display="none";
-  heartGroup.visible=true;
-  heartGroup.rotation.y+=0.01;
-  heartGroup.rotation.x=Math.sin(t)*0.15;
+    drawStars();
 
-  let scale=1+Math.sin(t*3)*0.05;
-  heartGroup.scale.set(scale,scale,scale);
- }
+    if(elapsed<2){
+        message.style.opacity = elapsed/2;
+    }
+    else if(elapsed<12){
+        message.style.opacity = 1;
+    }
+    else if(elapsed<15){
+        message.style.opacity = 1-(elapsed-12)/3;
+    }
+    else{
+        message.style.display="none";
+        showHeart = true;
+    }
 
- // Update fireworks
- fireworks.forEach((fw,index)=>{
-  let pos=fw.mesh.geometry.attributes.position.array;
-  fw.velocities.forEach((v,i)=>{
-   pos[i*3]+=v.x;
-   pos[i*3+1]+=v.y;
-   pos[i*3+2]+=v.z;
-  });
-  fw.mesh.geometry.attributes.position.needsUpdate=true;
-  fw.life--;
-  if(fw.life<=0){
-   heartGroup.remove(fw.mesh);
-   fireworks.splice(index,1);
-  }
- });
+    if(showHeart){
+        drawHeart();
+    }
 
- renderer.render(scene,camera);
+    updateFireworks();
 }
 
 animate();
 
 window.addEventListener("resize",()=>{
- camera.aspect=window.innerWidth/window.innerHeight;
- camera.updateProjectionMatrix();
- renderer.setSize(window.innerWidth,window.innerHeight);
+    canvas.width=window.innerWidth;
+    canvas.height=window.innerHeight;
 });
 </script>
 
